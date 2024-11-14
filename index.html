@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- タスク入力フォーム -->
+    <div class="task-form">
+        <input type="text" id="taskTitle" placeholder="タスクを入力">
+        <input type="date" id="taskDate">
+        <select id="taskPriority">
+            <option value="高">高</option>
+            <option value="中">中</option>
+            <option value="低">低</option>
+        </select>
+        <button onclick="addTask()">追加</button>
+    </div>
+
+    <!-- タスク表示エリア -->
+    <div id="taskList">
+        <!-- タスクがここに表示される -->
+    </div>
+    <script>
+
+        // タスクを追加する関数
+        function addTask() {
+            // 入力値を取得
+            const title = document.getElementById('taskTitle').value;
+            const dueDate = document.getElementById('taskDate').value;
+            const priority = document.getElementById('taskPriority').value;
+
+            // 入力チェック　どちらかがfalseの場合リターン
+            if (!title || !dueDate) {
+                alert('タイトルと期限日は必須です');
+                return;
+            }
+
+            // それ以外の場合新しいタスクを作成
+            const task = {
+                id: Date.now(), // タイムスタンプをIDとして使用
+                title: title,
+                dueDate: dueDate,
+                priority: priority,
+                completed: false
+            };
+
+            // タスクを保存
+            saveTask(task);
+
+            // 画面を更新
+            displayTasks();
+
+            // フォームをクリア
+            clearForm();
+        }
+
+        // タスクを保存する関数
+        function saveTask(task) {
+            // 既存のタスクを取得
+            let tasks = getTasks();
+
+            // 新しいタスクを追加
+            tasks.push(task);
+
+            // LocalStorageに保存
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // 保存されているタスクを取得する関数
+        function getTasks() {
+            return JSON.parse(localStorage.getItem('tasks')) || [];
+        }
+
+        // タスクを表示する関数
+        function displayTasks() {
+            const tasks = getTasks();
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = ''; // 表示をクリア
+
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+
+                taskElement.innerHTML = `
+                    <input type="checkbox" 
+                           ${task.completed ? 'checked' : ''} 
+                           onclick="toggleTask(${task.id})">
+                    <span>${task.title}</span>
+                    <span>期限: ${task.dueDate}</span>
+                    <span>優先度: ${task.priority}</span>
+                    <button onclick="deleteTask(${task.id})">削除</button>
+                `;
+
+                taskList.appendChild(taskElement);
+            });
+        }
+
+        // タスクの完了状態を切り替える関数
+        function toggleTask(id) {
+            let tasks = getTasks();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                displayTasks();
+            }
+        }
+
+        // タスクを削除する関数
+        function deleteTask(id) {
+            if (confirm('このタスクを削除しますか？')) {
+                let tasks = getTasks().filter(task => task.id !== id);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                displayTasks();
+            }
+        }
+
+        // フォームをクリアする関数
+        function clearForm() {
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDate').value = '';
+            document.getElementById('taskPriority').value = '中';
+        }
+
+        // ページ読み込み時にタスクを表示
+        window.onload = function () {
+            displayTasks();
+        };
+    </script>
+</body>
+
+</html>
